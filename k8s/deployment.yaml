@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: punitxd-sample-python
+  namespace: kairo-punitxd-sample-python
+  labels:
+    app: punitxd-sample-python
+    app.kubernetes.io/managed-by: kairo
+spec:
+  replicas: 1
+  # rollback needs old ReplicaSets to still be around
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: punitxd-sample-python
+  template:
+    metadata:
+      labels:
+        app: punitxd-sample-python
+        app.kubernetes.io/managed-by: kairo
+    spec:
+      containers:
+        - name: punitxd-sample-python
+          image: kairo/punitxd-sample-python:6a59f205a6c1527e10c01b7731d6e367f655ec7b
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          # liveness + memory limit are what make self-healing possible.
+          # don't remove them without talking to BE 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
